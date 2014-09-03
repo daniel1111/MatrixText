@@ -84,12 +84,22 @@ void loop()
 
 void set_xy (byte x, byte y, byte val)
 {
+  // x is the column, y is the bit within the column (0 to 7)
   // The shift register is in the bit format 70123456, so we must move the last bit and push it into the first bit.
-  byte actual_y = (y-1)%8;         
- 
+  byte actual_y;// = (y-1)%8;
+
+  if (y == 0)
+  {
+   actual_y = 7;
+  }
+  else
+  {
+    actual_y = y - 1;
+  }
+
   if (val)
     dataArray[x] |= 1 << actual_y;    // Set bit
   else
     dataArray[x] &= ~(1 << actual_y); // Clear bit
-}
+} 
 
