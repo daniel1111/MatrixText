@@ -50,6 +50,11 @@ void MatrixText::set_scroll_speed(uint16_t speed)
   _scroll_speed = speed;
 }
 
+void MatrixText::set_character_spacing(uint8_t pixels)
+{
+  _character_spacing = pixels;
+}
+
 void MatrixText::show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16_t br_x, uint16_t br_y)
 {
   _msg = msg;
@@ -59,10 +64,13 @@ void MatrixText::show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16
   _br_x = br_x;
   _br_y = br_y;
   _position = 0;
+  _character_spacing = 1;
 }
+
 
 void MatrixText::loop()
 {
+  byte ch;
 
   if ( (millis()-_last_move) < _scroll_speed)
     return;
@@ -76,7 +84,7 @@ void MatrixText::loop()
 
   for (uint16_t x = _ul_x; x < _br_x; x++)
   {
-    uint16_t char_pos = (x+_position)/SYSTEM5x8_WIDTH;
+    uint16_t char_pos = (x+_position)/(SYSTEM5x8_WIDTH + _character_spacing);
 
     // Bounds check of message array
     if ( (char_pos >= _msg_len) || (char_pos < 0) )
@@ -86,9 +94,19 @@ void MatrixText::loop()
     if ( (_msg[char_pos] < 32) || (_msg[char_pos] > 126) )
       continue;
     
-    // Get character/font data from progmem
-    uint16_t font_pos = ((_msg[char_pos]-32)*SYSTEM5x8_WIDTH)+((x+_position)%SYSTEM5x8_WIDTH);
-    byte ch = pgm_read_byte_near(System5x8 + font_pos);
+    // Get the character data to display.
+    // If we're in the gap between characters, there is nothing to get.
+    if (((x+_position)%(SYSTEM5x8_WIDTH+_character_spacing)) >= SYSTEM5x8_WIDTH)
+    {
+      ch = 0;
+    } 
+    else
+    {      
+      // Get character/font data from progmem
+      uint16_t font_pos = ((_msg[char_pos]-32)*SYSTEM5x8_WIDTH) + ((x+_position)%(SYSTEM5x8_WIDTH+_character_spacing));
+      //                     ^^^ Get start of character ^^^               ^^^ Get position in character ^^^
+      ch = pgm_read_byte_near(System5x8 + font_pos);
+    }
 
     // Output column of character
     for (uint8_t y = _ul_y; y < _ul_y+SYSTEM5x8_HEIGHT; y++)
@@ -99,7 +117,7 @@ void MatrixText::loop()
   }
 
   // Scroll the text. If it's scrolled off-screen, reset position to just off the right edge
-  if ((int32_t)_position++ > (int32_t)(_msg_len * SYSTEM5x8_WIDTH)) 
+  if ((int32_t)_position++ > (int32_t)(_msg_len * (SYSTEM5x8_WIDTH + _character_spacing))) 
     _position = -1*_br_x;
 }
 
