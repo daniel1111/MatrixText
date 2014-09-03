@@ -33,9 +33,9 @@
 #ifndef MATRIXTEXT_H
 #define MATRIXTEXT_H
 
+#define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <Arduino.h>
-
 #include "System5x7.h"
 
 typedef unsigned char byte;
@@ -74,8 +74,10 @@ class MatrixText
         ul_y - Upper left y
         br_x - Bottom right x
         br_y - Bottom right y
+        scroll_text - Optional. If present and set to false, text will be static. Text will be drawn to screen
+                      on first call to <loop> only, unless it's force_redraw paramter is set.
     */
-    void show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16_t br_x, uint16_t br_y);
+    void show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16_t br_x, uint16_t br_y, bool scroll_text=true);
     
     /*
        Function: set_scroll_speed
@@ -98,8 +100,11 @@ class MatrixText
     /*
        Function: loop
          Call loop repeatedly to keep the text scrolling. Will only update the display if it's required based on the speed set using <set_scroll_speed>.
+       
+       Parameters:
+         force_redraw - if true, always re-draw text, even if position hasn't changed.
     */    
-    void loop();
+    void loop(bool force_redraw=false);
 
 
   private:
@@ -115,6 +120,7 @@ class MatrixText
     uint16_t _scroll_speed;
     unsigned long _last_move;
     uint8_t _character_spacing;
+    bool _scroll_text;
 };
 
 #endif

@@ -55,7 +55,7 @@ void MatrixText::set_character_spacing(uint8_t pixels)
   _character_spacing = pixels;
 }
 
-void MatrixText::show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16_t br_x, uint16_t br_y)
+void MatrixText::show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16_t br_x, uint16_t br_y, bool scroll_text)
 {
   _msg = msg;
   _msg_len = strlen(msg);
@@ -63,19 +63,40 @@ void MatrixText::show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16
   _ul_y = ul_y;
   _br_x = br_x;
   _br_y = br_y;
-  _position = 0;
   _character_spacing = 1;
+  _scroll_text = scroll_text;
+  
+  if (scroll_text)
+    _position = 0;
+  else
+    _position = INT16_MAX;
 }
 
 
-void MatrixText::loop()
+void MatrixText::loop(bool force_redraw)
 {
   byte ch;
+  bool scroll_text = false;
 
-  if ( (millis()-_last_move) < _scroll_speed)
+  // If we're not scrolling the text, and this is the first call to loop(), always draw the text
+  if (!_scroll_text && (_position == INT16_MAX))
+  {
+    _position = 0;
+    force_redraw = true;
+  }
+  
+  // Does the text position need to be advanced?
+  if (_scroll_text)
+  {
+    if ((millis()-_last_move) < _scroll_speed)
+      scroll_text = false;
+    else
+      scroll_text = true;
+  } 
+    
+  // if it's not time to advance the text, and force_redraw hasn't been set, return without doing anything.
+  if (!force_redraw && !scroll_text)
     return;
-  else
-    _last_move = millis();
   
   // Wipe buffer
   for (uint16_t x=_ul_x; x < _br_x; x++)
@@ -117,7 +138,10 @@ void MatrixText::loop()
   }
 
   // Scroll the text. If it's scrolled off-screen, reset position to just off the right edge
-  if ((int32_t)_position++ > (int32_t)(_msg_len * (SYSTEM5x8_WIDTH + _character_spacing))) 
-    _position = -1*_br_x;
+  if (scroll_text)
+  {
+    _last_move = millis();
+    if ((int32_t)_position++ > (int32_t)(_msg_len * (SYSTEM5x8_WIDTH + _character_spacing))) 
+      _position = -1*_br_x;
+  }
 }
-

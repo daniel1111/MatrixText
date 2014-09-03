@@ -90,7 +90,7 @@ MatrixText *_t2;
 void setup() 
 {  
   lcdBegin(); // This will setup our pins, and initialize the LCD
-  setContrast(50); // Pretty good value, play around with it
+  setContrast(55); // Pretty good value, play around with it
 
   clearDisplay(0);
   updateDisplay();
@@ -98,18 +98,17 @@ void setup()
   
   _t1 = new MatrixText(set_xy);
   _t2 = new MatrixText(set_xy);
-  _t1->show_text("Hello World!", 0,  0, LCD_WIDTH, 10); // display at top of screen
-  _t1->set_scroll_speed(100);
+  _t1->show_text("Hello World!", 0,  0, LCD_WIDTH, 10, false); // display at top of screen, don't scroll
   _t2->show_text("0123456789", 0, 20, LCD_WIDTH, 40); // display in middle
+  _t2->set_scroll_speed(0); // scroll as fast as possible
 }
 
 void loop() {
   
-   clearDisplay(0);
    _t1->loop();
    _t2->loop();   
    updateDisplay();
-   delay(75);
+   delay(20);
 }
 
 void set_xy (byte x, byte y, byte val)
@@ -193,6 +192,7 @@ void lcdBegin(void)
   SPI.begin();
   SPI.setDataMode(SPI_MODE0);
   SPI.setBitOrder(MSBFIRST);
+  SPI.setClockDivider(SPI_CLOCK_DIV2);
 
   //Reset the LCD to a known state
   digitalWrite(rstPin, LOW);
