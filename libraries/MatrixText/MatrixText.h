@@ -44,7 +44,7 @@ typedef void (*set_xy_fuct)(byte,byte,byte);
 
 /*
    Class: MatrixText
-   Class that can be used to generate scroll text on matrix displays
+   Class that can be used to generate scrolling text on matrix displays
 */
 class MatrixText
 {
@@ -75,7 +75,7 @@ class MatrixText
         br_x - Bottom right x
         br_y - Bottom right y
         scroll_text - Optional. If present and set to false, text will be static. Text will be drawn to screen
-                      on first call to <loop> only, unless it's force_redraw paramter is set.
+                      on first call to <loop> only, unless its force_redraw paramter is set.
     */
     void show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16_t br_x, uint16_t br_y, bool scroll_text=true);
     
