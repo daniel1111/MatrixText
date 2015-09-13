@@ -39,7 +39,7 @@
 #include "System5x7.h"
 
 typedef unsigned char byte;
-typedef void (*set_xy_fuct)(byte,byte,byte);
+typedef void (*set_xy_fuct)(uint16_t,uint16_t,byte);
 
 
 /*
@@ -104,7 +104,7 @@ class MatrixText
        Parameters:
          force_redraw - if true, always re-draw text, even if position hasn't changed.
     */    
-    void loop(bool force_redraw=false);
+    bool loop(bool force_redraw=false);
 
 
   private:

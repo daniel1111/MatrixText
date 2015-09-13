@@ -31,7 +31,7 @@ see www.re-innovation.co.uk for more details
 */
 
 #define DISPLAY_WIDTH  12
-#define DISPLAY_HEIGHT 12
+#define DISPLAY_HEIGHT 8
 
 // This is for the serial shifted output data
 const int sLatch = 0;   //Pin connected to ST_CP of 74HC595
@@ -40,13 +40,23 @@ const int sData = 4;    //Pin connected to DS of 74HC595
 const int led = 6;  //LED of Minimus
 const int swInputA = 7;  // An input switch
 
+const int maxModes = 3;  // Total number of switch modes
+
 int number = 0;  // This will be the displayed data
 
 uint8_t dataArray[DISPLAY_WIDTH];  // This holds the data to display 
 
 MatrixText *mt1;  // MatrixText string
 
-const char text[] = "Nottingham Hackspace";
+const char text[] = "Welcome to Nottingham Hackspace";
+const char text1[] = "www.nottinghack.org.uk";
+const char text2[] = "Ask me for a hackspace tour...";
+
+int SWcounter = 0;  // This is a debounce counter for the switch
+
+int mode = 0;  // This holds the mode we are in
+
+boolean lastPress= HIGH;  // This is to latch the button press
 
 void setup()
 {
@@ -60,14 +70,15 @@ void setup()
   mt1 = new MatrixText(set_xy);
   mt1->show_text(text, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
   mt1->set_scroll_speed(100); // Advance text position every 100ms
-  
+
   memset(dataArray,0,sizeof(dataArray));  // Set dataArray to clear it 
+  
 }
 
 void loop()
 { 
   mt1->loop(); // do scrolling text
-    
+  
   // Write the dataArray to the LED matrix:
   digitalWrite(sLatch, LOW);  
   for(int j=0;j<sizeof(dataArray);j++)
@@ -76,30 +87,99 @@ void loop()
     shiftOut(sData, sClk, LSBFIRST, dataArray[j]);  // Rotated text
   }
   digitalWrite(sLatch, HIGH); 
-  
+
+
+  // Only want to do this if the switch has been pressed
+  if(lastPress==HIGH)
+  {  
+    // Choose what to do depending upon the mode:
+    // Mode are:
+    // 0 = flash random colours
+    // 1 = Write "Nottingham Hackspace"
+    // 2 = Write "ERROR"
+    switch(mode)
+    {
+      case 0:
+        // Mode = 0   
+        // Output text from text 1
+        mt1->show_text(text, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        
+      break;
+      
+      case 1:
+        // Mode = 1
+        // In this case show text 2
+        mt1->show_text(text1, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        
+      break;
+      
+      case 2:
+        // Mode = 2
+        // In this case show text 2
+        mt1->show_text(text2, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+        
+      break; 
+      
+      case 3:
+        // Mode = 3
+        // Just show a full ON screen
+        for(int j=0;j<12;j++)
+        {  
+          dataArray[j] = B11111111;
+        }          
+      break;   
+      
+      default:
+      // Do this when not in a mode
+         
+      break;    
+    }  
+  }
+   
+  // Check the switch and change mode depending:
+  if(digitalRead(swInputA)==LOW&&lastPress==LOW)
+  {
+    // Button pressed so count up
+    SWcounter++;
+    if(SWcounter>=50)
+    {
+      mode++;
+      if(mode>maxModes)
+      {
+        mode=0;
+      }
+      lastPress=HIGH;
+    }
+  }
+  else if (digitalRead(swInputA)==HIGH&&lastPress==HIGH)
+  {
+    // Button NOT pressed - reset everything
+    SWcounter=0;
+    lastPress=LOW;
+  }
+     
   // This is the main delay and slows everything down a bit.
-  delay(30);
+  delay(10);
   
 }
 
-void set_xy (byte x, byte y, byte val)
+void set_xy (uint16_t x, uint16_t y, byte val)
 {
-  // x is the column, y is the bit within the column (0 to 7)
+  /// x is the column, y is the bit within the column (0 to 7)
   // The shift register is in the bit format 70123456, so we must move the last bit and push it into the first bit.
-  byte actual_y;// = (y-1)%8;
-
+  byte actual_y;// = (y-1)%8; 
+  
   if (y == 0)
   {
-   actual_y = 7;
+   actual_y = 7; 
   }
   else
   {
     actual_y = y - 1;
   }
-
+  
   if (val)
     dataArray[x] |= 1 << actual_y;    // Set bit
   else
     dataArray[x] &= ~(1 << actual_y); // Clear bit
-} 
-
+}

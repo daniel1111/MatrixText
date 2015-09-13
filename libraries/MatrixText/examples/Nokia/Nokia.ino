@@ -111,7 +111,7 @@ void loop() {
    delay(20);
 }
 
-void set_xy (byte x, byte y, byte val)
+void set_xy (uint16_t x, uint16_t y, byte val)
 {
   setPixel(x, y, (val ? BLACK : WHITE));
 }

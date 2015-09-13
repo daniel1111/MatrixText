@@ -58,7 +58,7 @@ void MatrixText::set_character_spacing(uint8_t pixels)
 void MatrixText::show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16_t br_x, uint16_t br_y, bool scroll_text)
 {
   _msg = msg;
-  _msg_len = strlen(msg);
+  _msg_len = strlen(_msg);
   _ul_x = ul_x;
   _ul_y = ul_y;
   _br_x = br_x;
@@ -70,10 +70,10 @@ void MatrixText::show_text(const char *msg, uint16_t ul_x, uint16_t ul_y, uint16
     _position = 0;
   else
     _position = INT16_MAX;
-}
+} 
 
 
-void MatrixText::loop(bool force_redraw)
+bool MatrixText::loop(bool force_redraw)
 {
   byte ch;
   bool scroll_text = false;
@@ -81,7 +81,8 @@ void MatrixText::loop(bool force_redraw)
   // If we're not scrolling the text, and this is the first call to loop(), always draw the text
   if (!_scroll_text && (_position == INT16_MAX))
   {
-    _position = 0;
+    _position = SYSTEM5x8_WIDTH;
+    _position = SYSTEM5x8_WIDTH - _ul_x;
     force_redraw = true;
   }
   
@@ -96,7 +97,7 @@ void MatrixText::loop(bool force_redraw)
     
   // if it's not time to advance the text, and force_redraw hasn't been set, return without doing anything.
   if (!force_redraw && !scroll_text)
-    return;
+    return false;
   
   // Wipe buffer
   for (uint16_t x=_ul_x; x < _br_x; x++)
@@ -105,10 +106,10 @@ void MatrixText::loop(bool force_redraw)
 
   for (uint16_t x = _ul_x; x < _br_x; x++)
   {
-    uint16_t char_pos = (x+_position)/(SYSTEM5x8_WIDTH + _character_spacing);
+    uint16_t char_pos = ((x+_position)/(SYSTEM5x8_WIDTH + _character_spacing) - 1);
 
     // Bounds check of message array
-    if ( (char_pos >= _msg_len) || (char_pos < 0) )
+    if (char_pos >= _msg_len)
       continue;
 
     // Check character is in the font
@@ -144,4 +145,6 @@ void MatrixText::loop(bool force_redraw)
     if ((int32_t)_position++ > (int32_t)(_msg_len * (SYSTEM5x8_WIDTH + _character_spacing))) 
       _position = -1*_br_x;
   }
+  
+  return true;
 }
